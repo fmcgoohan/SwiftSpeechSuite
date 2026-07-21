@@ -1,0 +1,51 @@
+# SwiftSpeechSuite
+
+Reusable macOS building blocks for a read-aloud / text-to-speech app. Each
+module is its own library product, so you depend on only what you need.
+
+| Product | What it gives you |
+|---|---|
+| `SwiftLogKit` | `os.Logger` channels with an injectable subsystem (`SFLog.subsystem`, or the `LogKit(subsystem:)` value type). |
+| `SwiftSpeechKit` | Apple on-device TTS (`SpeechPlayer`), single-shot (`AudioFilePlayer`) and streaming (`ChunkedAudioPlayer`) playback, sentence-aware chunking, and the shared `PlaybackRate` clamp. |
+| `SwiftReadingSession` | The persisted model for a "reading": segmented text, independent audio/text checkpoints, on-disk session packaging, an archive of completed readings, and deep-link continuation. Storage containers and the URL scheme are injectable. |
+| `SwiftGlobalHotkey` | A system-wide hotkey manager built on a CGEvent tap, with a protocol seam for testing. |
+| `AXFocus` / `AXTextSource` | Read the user's focused/selected text via the Accessibility API, with a clipboard fallback and click-anchor tracking. |
+| `AppleTranslationKit` | A coordinator around Apple's on-device Translation framework: language detection, chunked translation, an activity state machine, and a SwiftUI host view. |
+| `ElevenLabsSwift` | A small ElevenLabs TTS client plus a Keychain-backed credential store; HTTP transport is injectable for testing. |
+
+## Requirements
+
+macOS 26+. The platform floor is set by `AppleTranslationKit` (which uses
+`TranslationSession` APIs introduced in macOS 26); the accessibility and hotkey
+modules are macOS-only.
+
+## Installation
+
+```swift
+.package(url: "https://github.com/fmcgoohan/SwiftSpeechSuite.git", from: "0.1.0")
+```
+
+Then add only the products you use, e.g.:
+
+```swift
+.target(name: "MyApp", dependencies: [
+    .product(name: "SwiftSpeechKit", package: "SwiftSpeechSuite"),
+    .product(name: "SwiftReadingSession", package: "SwiftSpeechSuite"),
+])
+```
+
+## Branding the injectable defaults
+
+Each module defaults to a neutral identity; override once at launch:
+
+```swift
+SFLog.subsystem = "com.example.myapp"
+ElevenLabsCredentialStore.service = "com.example.myapp.elevenlabs"
+ReadingSessionLocations.recentSessionsContainer = "MyApp"
+ReadingSessionLocations.archiveContainer = "MyAppArchive"
+ReadingContinuationRequest.scheme = "myapp"
+```
+
+## License
+
+MIT — see [LICENSE](LICENSE).
