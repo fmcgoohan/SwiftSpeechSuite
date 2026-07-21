@@ -41,25 +41,38 @@ public struct ReadingContinuationRequest: Sendable, Equatable {
     }
 }
 
+/// How a backend resumes a partially-synthesized reading. Which backend uses
+/// which strategy is app policy, so the caller supplies it; the algorithms
+/// themselves live here and are reusable across apps.
+public enum SynthesisContinuationStrategy: Sendable, Equatable {
+    /// Resume from a UTF-16 text offset (engines with word/character alignment).
+    case textOffset
+    /// Resume from the first audio-incomplete segment boundary (streamed engines
+    /// whose manifests carry no word alignment).
+    case segmentBoundary
+    /// This backend cannot resume mid-reading.
+    case none
+}
+
 public extension ReadingSession {
-    /// Text that was never fully synthesized. Audio-backed engines restart
-    /// at a segment boundary because manifests do not contain word alignment.
-    var synthesisContinuationText: String? {
-        switch backend {
-        case .onDevice:
+    /// Text that was never fully synthesized, computed per the given resume
+    /// `strategy`. Returns `nil` when nothing remains or the strategy is `.none`.
+    func synthesisContinuationText(strategy: SynthesisContinuationStrategy) -> String? {
+        switch strategy {
+        case .textOffset:
             guard let utf16Offset = checkpoint.textOffset else { return text }
             let bounded = min(max(utf16Offset, 0), text.utf16.count)
             let index = String.Index(utf16Offset: bounded, in: text)
             let remainder = String(text[index...]).trimmingCharacters(in: .whitespacesAndNewlines)
             return remainder.isEmpty ? nil : remainder
-        case .nativeMLX, .kokoroServer:
+        case .segmentBoundary:
             guard let firstIncomplete = segments.firstIndex(where: { !$0.audioComplete }) else { return nil }
             let remainder = segments[firstIncomplete...]
                 .map(\.text)
                 .joined(separator: " ")
                 .trimmingCharacters(in: .whitespacesAndNewlines)
             return remainder.isEmpty ? nil : remainder
-        case .elevenLabs, .pageAudio:
+        case .none:
             return nil
         }
     }

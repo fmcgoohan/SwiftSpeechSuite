@@ -9,7 +9,7 @@ import Testing
         id: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!,
         createdAt: date,
         text: "First sentence. Second sentence.",
-        backend: .nativeMLX,
+        backend: ReadingBackend("nativeMLX"),
         playbackRate: 1.5,
         segmentTexts: ["First sentence.", "Second sentence."]
     )
@@ -30,7 +30,7 @@ import Testing
 @Test func readingSessionRoundTripsAsArchiveManifest() throws {
     let session = ReadingSession(
         text: "A portable research item.",
-        backend: .nativeMLX,
+        backend: ReadingBackend("nativeMLX"),
         source: ReadingSource(
             applicationName: "Safari",
             title: "An Article",
@@ -56,7 +56,7 @@ import Testing
     let session = ReadingSession(
         text: "Bonjour.",
         translation: translation,
-        backend: .onDevice,
+        backend: ReadingBackend("onDevice"),
         segmentTexts: ["Bonjour."]
     )
 
@@ -77,7 +77,7 @@ import Testing
 @Test func seekingPlaybackRebuildsCheckpointAndSegmentProgress() {
     var session = ReadingSession(
         text: "One. Two. Three.",
-        backend: .kokoroServer,
+        backend: ReadingBackend("kokoroServer"),
         segmentTexts: ["One.", "Two.", "Three."]
     )
     for index in session.segments.indices {
@@ -99,7 +99,7 @@ import Testing
 @Test func textOnlySessionReportsProgressWithoutGeneratedAudio() {
     var session = ReadingSession(
         text: "A text-only on-device reading.",
-        backend: .onDevice,
+        backend: ReadingBackend("onDevice"),
         audioFileExtension: nil,
         segmentTexts: ["A text-only on-device reading."]
     )
@@ -123,7 +123,7 @@ import Testing
     let archived = root.appendingPathComponent("archive", isDirectory: true)
     var session = ReadingSession(
         text: "Buffered audio.",
-        backend: .elevenLabs,
+        backend: ReadingBackend("elevenLabs"),
         audioFileExtension: "mp3",
         segmentTexts: ["Buffered audio."]
     )
@@ -147,7 +147,7 @@ import Testing
 @Test func pageAudioRecordPreservesOriginalMediaURL() throws {
     var session = ReadingSession(
         text: "Publisher article.",
-        backend: .pageAudio,
+        backend: ReadingBackend("pageAudio"),
         audioFileExtension: nil,
         segmentTexts: ["Publisher article."]
     )
@@ -178,46 +178,69 @@ import Testing
 @Test func segmentedContinuationStartsAtFirstIncompleteSynthesisBoundary() {
     var session = ReadingSession(
         text: "First. Second. Third.",
-        backend: .nativeMLX,
+        backend: ReadingBackend("nativeMLX"),
         segmentTexts: ["First.", "Second.", "Third."]
     )
     session.markAudioComplete(segmentIndex: 0)
     session.recordGeneratedAudio(segmentIndex: 1, seconds: 0.5)
 
-    #expect(session.synthesisContinuationText == "Second. Third.")
+    #expect(session.synthesisContinuationText(strategy: .segmentBoundary) == "Second. Third.")
 
     session.markAudioComplete(segmentIndex: 1)
     session.markAudioComplete(segmentIndex: 2)
-    #expect(session.synthesisContinuationText == nil)
+    #expect(session.synthesisContinuationText(strategy: .segmentBoundary) == nil)
 }
 
 @Test func onDeviceContinuationUsesUTF16Checkpoint() {
     var session = ReadingSession(
         text: "Read 😀 the remainder.",
-        backend: .onDevice,
+        backend: ReadingBackend("onDevice"),
         audioFileExtension: nil,
         segmentTexts: ["Read 😀 the remainder."]
     )
     let prefix = "Read 😀 "
     session.seekText(to: prefix.utf16.count)
 
-    #expect(session.synthesisContinuationText == "the remainder.")
+    #expect(session.synthesisContinuationText(strategy: .textOffset) == "the remainder.")
 }
 
 @Test func bufferedAndPublisherBackendsDoNotRegenerateCompletedMedia() {
     let elevenLabs = ReadingSession(
         text: "Already synthesized.",
-        backend: .elevenLabs,
+        backend: ReadingBackend("elevenLabs"),
         segmentTexts: ["Already synthesized."]
     )
     let pageAudio = ReadingSession(
         text: "Publisher recording.",
-        backend: .pageAudio,
+        backend: ReadingBackend("pageAudio"),
         segmentTexts: ["Publisher recording."]
     )
 
-    #expect(elevenLabs.synthesisContinuationText == nil)
-    #expect(pageAudio.synthesisContinuationText == nil)
+    #expect(elevenLabs.synthesisContinuationText(strategy: .none) == nil)
+    #expect(pageAudio.synthesisContinuationText(strategy: .none) == nil)
+}
+
+@Test func readingBackendEncodesAsBareStringForWireCompatibility() throws {
+    // The pre-0.2 model stored `backend` as a String-backed enum, so it must
+    // still encode/decode as a bare JSON string, not `{"rawValue": …}`.
+    let data = try JSONEncoder().encode(ReadingBackend("nativeMLX"))
+    #expect(String(data: data, encoding: .utf8) == "\"nativeMLX\"")
+    #expect(try JSONDecoder().decode(ReadingBackend.self, from: data) == ReadingBackend("nativeMLX"))
+
+    // A whole session round-trips, and a hand-written 0.1.x manifest snippet
+    // with a bare backend string still decodes.
+    let session = ReadingSession(
+        text: "Hello.",
+        backend: ReadingBackend("nativeMLX"),
+        segmentTexts: ["Hello."]
+    )
+    let roundTripped = try JSONDecoder().decode(
+        ReadingSession.self,
+        from: JSONEncoder().encode(session)
+    )
+    #expect(roundTripped.backend == ReadingBackend("nativeMLX"))
+    #expect(String(data: try JSONEncoder().encode(session), encoding: .utf8)?
+        .contains("\"backend\":\"nativeMLX\"") == true)
 }
 
 @Test func archiveDiscoversPromotesAndDeletesCompletedSessions() throws {
@@ -234,7 +257,7 @@ import Testing
         id: id,
         createdAt: Date(timeIntervalSince1970: 200),
         text: "A durable research reading.",
-        backend: .nativeMLX,
+        backend: ReadingBackend("nativeMLX"),
         source: ReadingSource(applicationName: "Safari", title: "Research Notes"),
         segmentTexts: ["A durable research reading."]
     )
@@ -276,7 +299,7 @@ import Testing
     let active = ReadingSession(
         id: id,
         text: "Still reading.",
-        backend: .nativeMLX,
+        backend: ReadingBackend("nativeMLX"),
         segmentTexts: ["Still reading."]
     )
     let encoder = JSONEncoder()

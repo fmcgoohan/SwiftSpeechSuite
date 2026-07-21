@@ -1,12 +1,26 @@
 import Foundation
 import SwiftSpeechKit
 
-public enum ReadingBackend: String, Codable, Sendable, Equatable {
-    case onDevice
-    case elevenLabs
-    case kokoroServer
-    case nativeMLX
-    case pageAudio
+/// Identifies the engine that produced a reading. An open string identifier
+/// rather than a closed enum, so each app names its own backends via a
+/// `static let` extension (e.g. `ReadingBackend("nativeMLX")`) without this
+/// package enumerating any one app's engines.
+public struct ReadingBackend: RawRepresentable, Codable, Hashable, Sendable {
+    public let rawValue: String
+
+    public init(rawValue: String) { self.rawValue = rawValue }
+    public init(_ rawValue: String) { self.rawValue = rawValue }
+
+    // Encode as a bare string (not `{"rawValue": …}`) so manifests stay
+    // wire-compatible with the previous `String`-backed enum.
+    public init(from decoder: any Decoder) throws {
+        rawValue = try decoder.singleValueContainer().decode(String.self)
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(rawValue)
+    }
 }
 
 public enum ReadingSessionStatus: String, Codable, Sendable, Equatable {
