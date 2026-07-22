@@ -1,5 +1,10 @@
 # SwiftSpeechSuite
 
+[![CI](https://github.com/fmcgoohan/SwiftSpeechSuite/actions/workflows/ci.yml/badge.svg)](https://github.com/fmcgoohan/SwiftSpeechSuite/actions/workflows/ci.yml)
+![Swift](https://img.shields.io/badge/Swift-6.2-orange.svg)
+![Platform](https://img.shields.io/badge/platform-macOS%2026%2B-blue.svg)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Reusable macOS building blocks for a read-aloud / text-to-speech app. Each
 module is its own library product, so you depend on only what you need.
 
