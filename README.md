@@ -27,7 +27,7 @@ translation coordinator moved to [AppleTranslationKit](https://github.com/fmcgoo
 ## Installation
 
 ```swift
-.package(url: "https://github.com/fmcgoohan/SwiftSpeechSuite.git", from: "0.1.0")
+.package(url: "https://github.com/fmcgoohan/SwiftSpeechSuite.git", from: "0.3.0")
 ```
 
 Then add only the products you use, e.g.:
