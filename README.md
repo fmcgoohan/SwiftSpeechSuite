@@ -15,14 +15,14 @@ module is its own library product, so you depend on only what you need.
 | `SwiftReadingSession` | The persisted model for a "reading": segmented text, independent audio/text checkpoints, on-disk session packaging, an archive of completed readings, and deep-link continuation. Storage containers and the URL scheme are injectable. |
 | `SwiftGlobalHotkey` | A system-wide hotkey manager built on a CGEvent tap, with a protocol seam for testing. |
 | `AXFocus` / `AXTextSource` | Read the user's focused/selected text via the Accessibility API, with a clipboard fallback and click-anchor tracking. |
-| `AppleTranslationKit` | A coordinator around Apple's on-device Translation framework: language detection, chunked translation, an activity state machine, and a SwiftUI host view. |
 | `ElevenLabsSwift` | A small ElevenLabs TTS client plus a Keychain-backed credential store; HTTP transport is injectable for testing. |
 
 ## Requirements
 
-macOS 26+. The platform floor is set by `AppleTranslationKit` (which uses
-`TranslationSession` APIs introduced in macOS 26); the accessibility and hotkey
-modules are macOS-only.
+macOS 13+ for `SwiftLogKit`, `SwiftSpeechKit`, `SwiftReadingSession`, and
+`ElevenLabsSwift` (which also build on iOS 16+); `SwiftGlobalHotkey` and
+`AXFocus`/`AXTextSource` use Carbon/AppKit and are macOS-only. (The on-device
+translation coordinator moved to [AppleTranslationKit](https://github.com/fmcgoohan/AppleTranslationKit).)
 
 ## Installation
 

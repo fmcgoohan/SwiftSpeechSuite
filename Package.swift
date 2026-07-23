@@ -7,16 +7,17 @@ import PackageDescription
 //   SwiftLogKit          os.Logger with an injectable subsystem
 //   SwiftSpeechKit       AVFoundation players + PlaybackRate/chunking
 //   SwiftReadingSession  session model, archive, deep-link continuation
-//   SwiftGlobalHotkey    CGEvent-tap global hotkey manager
-//   AXFocus / AXTextSource  Accessibility focus + captured-text reading
-//   AppleTranslationKit  on-device Translation-framework coordinator
+//   SwiftGlobalHotkey    CGEvent-tap global hotkey manager  (macOS only)
+//   AXFocus / AXTextSource  Accessibility focus + captured-text reading (macOS only)
 //   ElevenLabsSwift      ElevenLabs TTS client + Keychain store
 //
-// Platform floor is macOS 26 because AppleTranslationKit uses TranslationSession
-// APIs introduced there; the accessibility and hotkey modules are macOS-only.
+// SwiftLogKit, SwiftSpeechKit, SwiftReadingSession, and ElevenLabsSwift build on
+// iOS too; SwiftGlobalHotkey and AXFocus/AXTextSource use Carbon/AppKit and are
+// macOS-only. (The on-device Translation coordinator moved to its own repo,
+// AppleTranslationKit, which alone required the macOS 26 floor.)
 let package = Package(
     name: "SwiftSpeechSuite",
-    platforms: [.macOS(.v26)],
+    platforms: [.macOS(.v13), .iOS(.v16)],
     products: [
         .library(name: "SwiftLogKit", targets: ["SwiftLogKit"]),
         .library(name: "SwiftSpeechKit", targets: ["SwiftSpeechKit"]),
@@ -24,7 +25,6 @@ let package = Package(
         .library(name: "SwiftGlobalHotkey", targets: ["SwiftGlobalHotkey"]),
         .library(name: "AXFocus", targets: ["AXFocus"]),
         .library(name: "AXTextSource", targets: ["AXTextSource"]),
-        .library(name: "AppleTranslationKit", targets: ["AppleTranslationKit"]),
         .library(name: "ElevenLabsSwift", targets: ["ElevenLabsSwift"]),
     ],
     targets: [
@@ -34,7 +34,6 @@ let package = Package(
         .target(name: "SwiftGlobalHotkey"),
         .target(name: "AXFocus"),
         .target(name: "AXTextSource", dependencies: ["AXFocus"]),
-        .target(name: "AppleTranslationKit", dependencies: ["SwiftLogKit"]),
         .target(name: "ElevenLabsSwift"),
 
         .testTarget(name: "SwiftLogKitTests", dependencies: ["SwiftLogKit"]),
@@ -42,7 +41,6 @@ let package = Package(
         .testTarget(name: "SwiftReadingSessionTests", dependencies: ["SwiftReadingSession"]),
         .testTarget(name: "SwiftGlobalHotkeyTests", dependencies: ["SwiftGlobalHotkey"]),
         .testTarget(name: "AXTextSourceTests", dependencies: ["AXFocus", "AXTextSource"]),
-        .testTarget(name: "AppleTranslationKitTests", dependencies: ["AppleTranslationKit"]),
         .testTarget(name: "ElevenLabsSwiftTests", dependencies: ["ElevenLabsSwift"]),
     ]
 )
