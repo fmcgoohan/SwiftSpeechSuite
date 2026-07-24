@@ -27,6 +27,11 @@ let package = Package(
         .library(name: "AXTextSource", targets: ["AXTextSource"]),
         .library(name: "ElevenLabsSwift", targets: ["ElevenLabsSwift"]),
     ],
+    // swift-docc-plugin is only used by the docs GitHub Pages workflow on `main`.
+    // Tagged releases do not carry it, so version-pinned consumers never resolve it.
+    dependencies: [
+        .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.4.0"),
+    ],
     targets: [
         .target(name: "SwiftLogKit"),
         .target(name: "SwiftSpeechKit", dependencies: ["SwiftLogKit"]),

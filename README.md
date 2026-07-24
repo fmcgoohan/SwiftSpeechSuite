@@ -39,6 +39,78 @@ Then add only the products you use, e.g.:
 ])
 ```
 
+## Usage
+
+One short example per product.
+
+### SwiftLogKit
+
+```swift
+import SwiftLogKit
+
+let log = LogKit(subsystem: "com.example.myapp")
+log.pipeline.notice("started")
+// or the shared channels: SFLog.subsystem = "com.example.myapp"; SFLog.pipeline.notice("hi")
+```
+
+### SwiftSpeechKit
+
+```swift
+import SwiftSpeechKit
+
+let player = SpeechPlayer()
+player.setPlaybackRate(PlaybackRate.normalized(1.5))
+player.speak("Hello from SpeakFlow", rate: 0.5, pitch: 1, volume: 1, voiceIdentifier: nil)
+
+let chunks = SpeechTextChunker.chunk(longText, firstTarget: 350, target: 600, hardSplitLimit: 800)
+```
+
+### SwiftReadingSession
+
+```swift
+import SwiftReadingSession
+
+extension ReadingBackend { static let myTTS = ReadingBackend("myTTS") }
+
+var session = ReadingSession(text: "First. Second.", backend: .myTTS,
+                            segmentTexts: ["First.", "Second."])
+session.markAudioComplete(segmentIndex: 0)
+
+// Resume policy is the caller's: pick a strategy per backend.
+let remaining = session.synthesisContinuationText(strategy: .segmentBoundary)
+```
+
+### SwiftGlobalHotkey
+
+```swift
+import SwiftGlobalHotkey
+
+let manager = CGEventTapHotkeyManager(variants: [
+    HotkeyVariant(requiredModifierKeyCodes: []) { print("read-aloud hotkey!") }
+])
+_ = manager.start() // false if Accessibility/Input Monitoring isn't granted
+```
+
+### AXFocus / AXTextSource
+
+```swift
+import AXFocus
+
+if let target = await FocusCapture.captureFocusTarget() {
+    print(target)   // focused element's app, selected/field text, etc.
+}
+```
+
+### ElevenLabsSwift
+
+```swift
+import ElevenLabsSwift
+
+try ElevenLabsCredentialStore.save(apiKey)             // Keychain
+let client = ElevenLabsClient(apiKey: ElevenLabsCredentialStore.load()!)
+let audio = try await client.synthesize(text: "Hello", voiceId: voice, modelId: model)
+```
+
 ## Branding the injectable defaults
 
 Each module defaults to a neutral identity; override once at launch:
@@ -50,6 +122,14 @@ ReadingSessionLocations.recentSessionsContainer = "MyApp"
 ReadingSessionLocations.archiveContainer = "MyAppArchive"
 ReadingContinuationRequest.scheme = "myapp"
 ```
+
+## Documentation
+
+Rendered API docs (DocC) for every product:
+**https://fmcgoohan.github.io/SwiftSpeechSuite/documentation/**
+
+Built from source doc comments and published to GitHub Pages by
+`.github/workflows/docs.yml` on every push to `main`.
 
 ## License
 
